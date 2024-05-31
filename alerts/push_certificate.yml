@@ -1,0 +1,46 @@
+groups:
+  - name: simplemdm_push_certificate_expiry_alerts
+    rules:
+      - alert: PushCertificateExpiry30Days
+        expr: |
+          (simplemdm_push_certificate_expiry
+          and on() (time() > simplemdm_push_certificate_expiry - 30*24*60*60))
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: "Push Certificate Expiry Alert (30 Days)"
+          description: "The push certificate for {{ $labels.apple_id }} will expire in 30 days."
+
+      - alert: PushCertificateExpiry14Days
+        expr: |
+          (simplemdm_push_certificate_expiry
+          and on() (time() > simplemdm_push_certificate_expiry - 14*24*60*60))
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: "Push Certificate Expiry Alert (14 Days)"
+          description: "The push certificate for {{ $labels.apple_id }} will expire in 14 days."
+
+      - alert: PushCertificateExpiry7Days
+        expr: |
+          (simplemdm_push_certificate_expiry
+          and on() (time() > simplemdm_push_certificate_expiry - 7*24*60*60))
+        for: 1h
+        labels:
+          severity: critical
+        annotations:
+          summary: "Push Certificate Expiry Alert (7 Days)"
+          description: "The push certificate for {{ $labels.apple_id }} will expire in 7 days."
+
+      - alert: PushCertificateExpiry1Day
+        expr: |
+          (simplemdm_push_certificate_expiry
+          and on() (time() > simplemdm_push_certificate_expiry - 1*24*60*60))
+        for: 1h
+        labels:
+          severity: critical
+        annotations:
+          summary: "Push Certificate Expiry Alert (1 Day)"
+          description: "The push certificate for {{ $labels.apple_id }} will expire in 1 day."
