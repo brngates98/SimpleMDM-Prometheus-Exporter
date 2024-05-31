@@ -1,10 +1,10 @@
 # SimpleMDM Prometheus Exporter
 
-This Python application collects metrics from the SimpleMDM API and exposes them to Prometheus. It gathers information about devices, apps, enrollments, DEP servers, installed apps, and profiles, providing detailed insights into your SimpleMDM-managed environment.
+This Python application collects metrics from the SimpleMDM API and exposes them to Prometheus. It gathers information about devices, apps, enrollments (including attributes), DEP servers, installed apps, profiles, and the push certificate, providing detailed insights into your SimpleMDM-managed environment.
 
 ## Features
 
-- Collects metrics for devices, apps, enrollments (including attributes), DEP servers, installed apps, and profiles.
+- Collects metrics for devices, apps, enrollments (including attributes), DEP servers, installed apps, profiles, and the push certificate.
 - Exposes these metrics to Prometheus for monitoring and alerting.
 - Provides detailed labels for each metric to allow for comprehensive filtering and analysis.
 
@@ -140,6 +140,12 @@ This Python application collects metrics from the SimpleMDM API and exposes them
     - `device_name`: Name of the device.
     - `app_id`: ID of the installed app.
     - `app_name`: Name of the installed app.
+
+### Push Certificate Metrics
+
+- **`simplemdm_push_certificate_expiry`**: Expiry date of the push certificate.
+  - Labels:
+    - `apple_id`: Apple ID associated with the push certificate.
 
 ## License
 
