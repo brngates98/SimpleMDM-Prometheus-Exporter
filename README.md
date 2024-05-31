@@ -146,6 +146,7 @@ This Python application collects metrics from the SimpleMDM API and exposes them
 - **`simplemdm_push_certificate_expiry`**: Expiry date of the push certificate.
   - Labels:
     - `apple_id`: Apple ID associated with the push certificate.
+    - `expires_at`: Expiry date and time of the push certificate.
 
 ## License
 
