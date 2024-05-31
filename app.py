@@ -22,9 +22,16 @@ app_install_count = Gauge('simplemdm_app_install_count', 'Total number of instal
 app_type_count = Counter('simplemdm_app_type_count', 'Count of apps by type', ['app_type'])
 device_os_version_count = Counter('simplemdm_device_os_version_count', 'Count of devices by OS version', ['os_version'])
 enrollment_count = Gauge('simplemdm_enrollment_count', 'Total number of enrollments')
+enrollment_user_enrollment = Gauge('simplemdm_enrollment_user_enrollment', 'User enrollment status', ['enrollment_id'])
+enrollment_welcome_screen = Gauge('simplemdm_enrollment_welcome_screen', 'Welcome screen status', ['enrollment_id'])
+enrollment_authentication = Gauge('simplemdm_enrollment_authentication', 'Authentication status', ['enrollment_id'])
 dep_server_count = Gauge('simplemdm_dep_server_count', 'Total number of DEP servers')
 dep_server_token_expiry = Gauge('simplemdm_dep_server_token_expiry', 'Token expiry time for DEP server', ['server_id', 'server_name'])
 dep_server_last_synced = Gauge('simplemdm_dep_server_last_synced', 'Last synced time for DEP server', ['server_id', 'server_name'])
+profile_count = Gauge('simplemdm_profile_count', 'Total number of profiles managed by SimpleMDM')
+profile_device_count = Gauge('simplemdm_profile_device_count', 'Total number of devices associated with each profile', ['profile_id', 'profile_name', 'profile_type', 'profile_identifier', 'user_scope', 'group_count', 'reinstall_after_os_update'])
+
+# Commented out for now: log_event_details = Counter('simplemdm_log_event_details', 'Log event details', ['namespace', 'event_type', 'level', 'source', 'account_id', 'user_id', 'user_email', 'timestamp'])
 
 # Function to get data from SimpleMDM API with cursor-based pagination
 def fetch_data(endpoint):
@@ -57,6 +64,14 @@ def get_enrollments():
 # Function to get DEP servers
 def get_dep_servers():
     return fetch_data('dep_servers')
+
+# Function to get logs (disabled for now)
+# def get_logs():
+#     return fetch_data('logs')
+
+# Function to get profiles
+def get_profiles():
+    return fetch_data('profiles')
 
 # Function to get installed apps for a specific device
 def get_installed_apps(device_id):
@@ -91,10 +106,20 @@ def collect_metrics():
         dep_servers = get_dep_servers()
         logger.info(f'Collected {len(dep_servers)} DEP servers')
 
+        logger.info('Collecting profile metrics...')
+        profiles = get_profiles()
+        logger.info(f'Collected {len(profiles)} profiles')
+
+        # Commented out for now
+        # logger.info('Collecting log metrics...')
+        # logs = get_logs()
+        # logger.info(f'Collected {len(logs)} log entries')
+
         device_count.set(len(devices))
         app_count.set(len(apps))
         enrollment_count.set(len(enrollments))
         dep_server_count.set(len(dep_servers))
+        profile_count.set(len(profiles))
 
         for device in devices:
             device_id = device['id']
@@ -138,6 +163,47 @@ def collect_metrics():
                 dep_server_last_synced.labels(server_id=server_id, server_name=server_name).set(last_synced_timestamp)
             except ValueError as e:
                 logger.error(f"Error parsing last synced date for DEP server {server_id}: {e}")
+
+        for enrollment in enrollments:
+            enrollment_id = enrollment['id']
+            user_enrollment = enrollment['attributes']['user_enrollment']
+            welcome_screen = enrollment['attributes']['welcome_screen']
+            authentication = enrollment['attributes']['authentication']
+            enrollment_user_enrollment.labels(enrollment_id=enrollment_id).set(user_enrollment)
+            enrollment_welcome_screen.labels(enrollment_id=enrollment_id).set(welcome_screen)
+            enrollment_authentication.labels(enrollment_id=enrollment_id).set(authentication)
+
+        for profile in profiles:
+            profile_id = profile['id']
+            profile_name = profile['attributes']['name']
+            profile_type = profile['type']
+            profile_identifier = profile['attributes']['profile_identifier']
+            user_scope = profile['attributes']['user_scope']
+            group_count = profile['attributes']['group_count']
+            reinstall_after_os_update = profile['attributes'].get('reinstall_after_os_update', False)
+            associated_device_count = profile['attributes']['device_count']
+            profile_device_count.labels(
+                profile_id=profile_id,
+                profile_name=profile_name,
+                profile_type=profile_type,
+                profile_identifier=profile_identifier,
+                user_scope=user_scope,
+                group_count=group_count,
+                reinstall_after_os_update=reinstall_after_os_update
+            ).set(associated_device_count)
+
+        # Commented out for now
+        # for log in logs:
+        #     log_id = log['id']
+        #     namespace = log['attributes']['namespace']
+        #     event_type = log['attributes']['event_type']
+        #     level = log['attributes']['level']
+        #     source = log['attributes']['source']
+        #     timestamp = log['attributes']['at']
+        #     account_id = log['attributes']['relationships']['account']['data']['id'] if 'account' in log['attributes']['relationships'] else 'unknown'
+        #     user_id = log['attributes']['relationships']['user']['data']['id'] if 'user' in log['attributes']['relationships'] else 'unknown'
+        #     user_email = log['attributes']['relationships']['user']['data']['email'] if 'user' in log['attributes']['relationships'] else 'unknown'
+        #     log_event_details.labels(namespace=namespace, event_type=event_type, level=level, source=source, account_id=account_id, user_id=user_id, user_email=user_email, timestamp=timestamp).inc()
 
         logger.info('Metrics collection completed successfully.')
     except Exception as e:
