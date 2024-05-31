@@ -30,6 +30,7 @@ dep_server_token_expiry = Gauge('simplemdm_dep_server_token_expiry', 'Token expi
 dep_server_last_synced = Gauge('simplemdm_dep_server_last_synced', 'Last synced time for DEP server', ['server_id', 'server_name'])
 profile_count = Gauge('simplemdm_profile_count', 'Total number of profiles managed by SimpleMDM')
 profile_device_count = Gauge('simplemdm_profile_device_count', 'Total number of devices associated with each profile', ['profile_id', 'profile_name', 'profile_type', 'profile_identifier', 'user_scope', 'group_count', 'reinstall_after_os_update'])
+push_certificate_expiry = Gauge('simplemdm_push_certificate_expiry', 'Expiry date of the push certificate', ['apple_id', 'expires_at'])
 
 # Commented out for now: log_event_details = Counter('simplemdm_log_event_details', 'Log event details', ['namespace', 'event_type', 'level', 'source', 'account_id', 'user_id', 'user_email', 'timestamp'])
 
@@ -64,6 +65,12 @@ def get_enrollments():
 # Function to get DEP servers
 def get_dep_servers():
     return fetch_data('dep_servers')
+
+# Function to get push certificate
+def get_push_certificate():
+    response = requests.get(f'{BASE_URL}/push_certificate', auth=(API_KEY, ''))
+    response.raise_for_status()
+    return response.json()
 
 # Function to get logs (disabled for now)
 # def get_logs():
@@ -109,6 +116,10 @@ def collect_metrics():
         logger.info('Collecting profile metrics...')
         profiles = get_profiles()
         logger.info(f'Collected {len(profiles)} profiles')
+
+        logger.info('Collecting push certificate metrics...')
+        push_certificate = get_push_certificate()
+        logger.info(f'Collected push certificate')
 
         # Commented out for now
         # logger.info('Collecting log metrics...')
@@ -191,6 +202,12 @@ def collect_metrics():
                 group_count=group_count,
                 reinstall_after_os_update=reinstall_after_os_update
             ).set(associated_device_count)
+
+        # Push certificate
+        apple_id = push_certificate['data']['attributes']['apple_id']
+        expires_at_str = push_certificate['data']['attributes']['expires_at']
+        expires_at_timestamp = parser.isoparse(expires_at_str).timestamp()
+        push_certificate_expiry.labels(apple_id=apple_id, expires_at=expires_at_str).set(expires_at_timestamp)
 
         # Commented out for now
         # for log in logs:
