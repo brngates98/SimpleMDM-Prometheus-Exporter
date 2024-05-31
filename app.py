@@ -17,10 +17,14 @@ device_count = Gauge('simplemdm_device_count', 'Total number of devices managed 
 app_count = Gauge('simplemdm_app_count', 'Total number of apps managed by SimpleMDM')
 device_last_seen = Gauge('simplemdm_device_last_seen', 'Timestamp of the last seen device', ['device_id', 'device_name', 'os_version', 'build_version', 'simplemdm_name'])
 device_enrollment_status = Gauge('simplemdm_device_enrollment_status', 'Enrollment status of the device', ['device_id', 'device_name', 'os_version', 'build_version', 'simplemdm_name'])
+installed_app_count = Gauge('simplemdm_installed_app_count', 'Total number of installed apps for each device', ['device_id', 'device_name', 'app_id', 'app_name'])
 app_install_count = Gauge('simplemdm_app_install_count', 'Total number of installs for each app', ['app_id', 'app_name'])
 app_type_count = Counter('simplemdm_app_type_count', 'Count of apps by type', ['app_type'])
 device_os_version_count = Counter('simplemdm_device_os_version_count', 'Count of devices by OS version', ['os_version'])
 enrollment_count = Gauge('simplemdm_enrollment_count', 'Total number of enrollments')
+dep_server_count = Gauge('simplemdm_dep_server_count', 'Total number of DEP servers')
+dep_server_token_expiry = Gauge('simplemdm_dep_server_token_expiry', 'Token expiry time for DEP server', ['server_id', 'server_name'])
+dep_server_last_synced = Gauge('simplemdm_dep_server_last_synced', 'Last synced time for DEP server', ['server_id', 'server_name'])
 
 # Function to get data from SimpleMDM API with cursor-based pagination
 def fetch_data(endpoint):
@@ -50,6 +54,15 @@ def get_apps():
 def get_enrollments():
     return fetch_data('enrollments')
 
+# Function to get DEP servers
+def get_dep_servers():
+    return fetch_data('dep_servers')
+
+# Function to get installed apps for a specific device
+def get_installed_apps(device_id):
+    endpoint = f'devices/{device_id}/installed_apps'
+    return fetch_data(endpoint)
+
 # Map enrollment status to an integer value
 def map_status(status):
     status_map = {
@@ -74,9 +87,14 @@ def collect_metrics():
         enrollments = get_enrollments()
         logger.info(f'Collected {len(enrollments)} enrollments')
 
+        logger.info('Collecting DEP server metrics...')
+        dep_servers = get_dep_servers()
+        logger.info(f'Collected {len(dep_servers)} DEP servers')
+
         device_count.set(len(devices))
         app_count.set(len(apps))
         enrollment_count.set(len(enrollments))
+        dep_server_count.set(len(dep_servers))
 
         for device in devices:
             device_id = device['id']
@@ -92,6 +110,13 @@ def collect_metrics():
             device_enrollment_status.labels(device_id=device_id, device_name=device_name, os_version=os_version, build_version=build_version, simplemdm_name=simplemdm_name).set(map_status(device['attributes']['status']))
             device_os_version_count.labels(os_version=os_version).inc()
 
+            # Collect installed apps for the device
+            installed_apps = get_installed_apps(device_id)
+            for app in installed_apps:
+                app_id = app['id']
+                app_name = app['attributes']['name']
+                installed_app_count.labels(device_id=device_id, device_name=device_name, app_id=app_id, app_name=app_name).set(1)
+
         for app in apps:
             app_id = app['id']
             app_name = app['attributes']['name']
@@ -99,7 +124,21 @@ def collect_metrics():
             installs = app['attributes'].get('installations_count', 0)
             app_install_count.labels(app_id=app_id, app_name=app_name).set(installs)
             app_type_count.labels(app_type=app_type).inc()
-        
+
+        for server in dep_servers:
+            server_id = server['id']
+            server_name = server['attributes']['server_name']
+            try:
+                token_expiry_timestamp = parser.isoparse(server['attributes']['token_expires_at']).timestamp()
+                dep_server_token_expiry.labels(server_id=server_id, server_name=server_name).set(token_expiry_timestamp)
+            except ValueError as e:
+                logger.error(f"Error parsing token expiry date for DEP server {server_id}: {e}")
+            try:
+                last_synced_timestamp = parser.isoparse(server['attributes']['last_synced_at']).timestamp()
+                dep_server_last_synced.labels(server_id=server_id, server_name=server_name).set(last_synced_timestamp)
+            except ValueError as e:
+                logger.error(f"Error parsing last synced date for DEP server {server_id}: {e}")
+
         logger.info('Metrics collection completed successfully.')
     except Exception as e:
         logger.error(f'Error collecting metrics: {e}')
