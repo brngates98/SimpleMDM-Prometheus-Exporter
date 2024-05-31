@@ -13,7 +13,7 @@ This Python application collects metrics from the SimpleMDM API and exposes them
 1. Clone this repository:
 
     ```bash
-    git clone https://github.com/yourusername/simplemdm-prometheus-exporter.git
+    git clone https://github.com/bgatestmg/simplemdm-prometheus-exporter.git
     cd simplemdm-prometheus-exporter
     ```
 
