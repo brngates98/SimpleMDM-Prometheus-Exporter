@@ -3,13 +3,15 @@ import requests
 import logging
 from prometheus_client import start_http_server, Gauge, Counter
 from dateutil import parser
+import os
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+api_key_env = os.getenv('API_KEY', 'your_simplemdm_api_key')  # Default values are placeholders
 
 # Constants
-API_KEY = 'your_simplemdm_api_key'  # Replace with your correct API key
+API_KEY = api_key_env  # Replace with your correct API key
 BASE_URL = 'https://a.simplemdm.com/api/v1'
 
 # Prometheus metrics definitions
