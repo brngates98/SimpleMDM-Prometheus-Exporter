@@ -1,6 +1,6 @@
 # SimpleMDM Prometheus Exporter
 
-This Python application collects metrics from the SimpleMDM API and exposes them to Prometheus. It gathers information about devices, apps, enrollments (including attributes), DEP servers, installed apps, profiles, and the push certificate, providing detailed insights into your SimpleMDM-managed environment.
+This Python application collects metrics from the SimpleMDM API and exposes them to Prometheus. It gathers information about devices, apps, enrollments (including attributes), DEP servers, installed apps, profiles, and the push certificate, providing detailed insights into your SimpleMDM-managed environment..
 
 ## Features
 
