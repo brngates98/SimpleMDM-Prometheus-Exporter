@@ -23,7 +23,9 @@ This Python application collects metrics from the SimpleMDM API and exposes them
     pip install -r requirements.txt
     ```
 
-3. Replace the placeholder `API_KEY` with your actual SimpleMDM API key in the script.
+3. Replace the placeholder `API_KEY` with your actual SimpleMDM API key in the script. This has been updated to support Environment Variables:
+export API_KEY=your_api_key_here
+
 
 ## Usage
 
