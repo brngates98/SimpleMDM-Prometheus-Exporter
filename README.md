@@ -72,7 +72,7 @@ prometheus.scrape "simplemdm" {
   job_name          = "simplemdm-exporterapi"
   metrics_path      = "/"
 
-  clustering { enabled = true }
+  clustering { enabled = true } #this is optional, i run alloy in kubernetes as a daemonset so it is useful for me
 }
 
 prometheus.remote_write "metrics_service" {
