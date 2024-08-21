@@ -1,155 +1,106 @@
+
 # SimpleMDM Prometheus Exporter
 
-This Python application collects metrics from the SimpleMDM API and exposes them to Prometheus. It gathers information about devices, apps, enrollments (including attributes), DEP servers, installed apps, profiles, and the push certificate, providing detailed insights into your SimpleMDM-managed environment..
+This is a Prometheus exporter for [SimpleMDM](https://simplemdm.com/), allowing you to collect and expose metrics from SimpleMDM for monitoring purposes.
 
 ## Features
 
-- Collects metrics for devices, apps, enrollments (including attributes), DEP servers, installed apps, profiles, and the push certificate.
-- Exposes these metrics to Prometheus for monitoring and alerting.
-- Provides detailed labels for each metric to allow for comprehensive filtering and analysis.
+- Exposes device metrics from SimpleMDM in a format consumable by Prometheus.
+- Provides insights into device statuses, profiles, apps, and other important data managed via SimpleMDM.
+- Easy to deploy with Docker or directly on a host.
 
 ## Installation
 
-1. Clone this repository:
+To install and set up the SimpleMDM Prometheus Exporter, you can clone the repository and follow the steps below:
 
-    ```bash
-    git clone https://github.com/brngates98/simplemdm-prometheus-exporter.git
-    cd simplemdm-prometheus-exporter
-    ```
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/brngates98/SimpleMDM-Prometheus-Exporter.git
+   cd SimpleMDM-Prometheus-Exporter
+   ```
 
-2. Install the required Python packages:
+2. **Install dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-    ```bash
-    pip install -r requirements.txt
-    ```
+3. **Set your SimpleMDM API token as an environment variable:**
+   ```bash
+   export SIMPLEMDM_API_TOKEN=<your_api_token>
+   ```
 
-3. Replace the placeholder `API_KEY` with your actual SimpleMDM API key in the script. This has been updated to support Environment Variables:
-export API_KEY=your_api_key_here
-
+4. **Run the exporter:**
+   ```bash
+   python app.py
+   ```
 
 ## Usage
 
-1. Start the Prometheus exporter:
+### Using Docker
 
-    ```bash
-    python simplemdm_exporter.py
-    ```
+You can run the SimpleMDM Prometheus Exporter using Docker:
 
-2. The exporter will start a web server on port `8000` to expose the metrics.
+```bash
+docker run -d -e SIMPLEMDM_API_TOKEN=<your_api_token> -p 9110:9110 your-docker-image
+```
 
-3. Configure Prometheus to scrape metrics from this exporter by adding the following job to your `prometheus.yml` configuration file:
+### Running Locally
 
-    ```yaml
-    scrape_configs:
-      - job_name: 'simplemdm'
-        static_configs:
-          - targets: ['localhost:8000']
-    ```
+To run the exporter directly on your host machine, follow the installation steps above.
 
-## Available Metrics and Labels
+### Scraping with Prometheus
 
-### Device Metrics
+To scrape metrics from the SimpleMDM Prometheus Exporter using Prometheus, add the following job to your `prometheus.yml` configuration:
 
-- **`simplemdm_device_count`**: Total number of devices managed by SimpleMDM.
+```yaml
+scrape_configs:
+  - job_name: 'simplemdm-exporterapi'
+    static_configs:
+      - targets: ['simplemdm-exporter-service.simplemdm.svc.cluster.local:8000']
+```
 
-- **`simplemdm_device_last_seen`**: Timestamp of the last seen device.
-  - Labels:
-    - `device_id`: ID of the device.
-    - `device_name`: Name of the device.
-    - `os_version`: OS version of the device.
-    - `build_version`: Build version of the device.
-    - `simplemdm_name`: SimpleMDM name of the device.
+### Scraping with Alloy Agent
 
-- **`simplemdm_device_enrollment_status`**: Enrollment status of the device.
-  - Labels:
-    - `device_id`: ID of the device.
-    - `device_name`: Name of the device.
-    - `os_version`: OS version of the device.
-    - `build_version`: Build version of the device.
-    - `simplemdm_name`: SimpleMDM name of the device.
+To scrape metrics using an Alloy agent, you can use the following `config.alloy` configuration:
 
-### App Metrics
+```hcl
+prometheus.scrape "simplemdm" {
+  scrape_timeout    = "60s"
+  targets           = [ {"__address__" = "simplemdm-exporter-service.simplemdm.svc.cluster.local:8000"}, ]
+  params            = { "target" = ["all"] }
+  forward_to        = [prometheus.remote_write.metrics_service.receiver]
+  job_name          = "simplemdm-exporterapi"
+  metrics_path      = "/"
 
-- **`simplemdm_app_count`**: Total number of apps managed by SimpleMDM.
+  clustering { enabled = true }
+}
 
-- **`simplemdm_app_install_count`**: Total number of installs for each app.
-  - Labels:
-    - `app_id`: ID of the app.
-    - `app_name`: Name of the app.
+prometheus.remote_write "metrics_service" {
+  endpoint {
+    url = "https://mimir/api/v1/push"
+  }
+}
+```
 
-- **`simplemdm_app_type_count`**: Count of apps by type.
-  - Labels:
-    - `app_type`: Type of the app.
+Replace `simplemdm-exporter-service.simplemdm.svc.cluster.local:8000` with the actual URL or IP address of the exporter, and `https://mimir/api/v1/push` with the URL of your Mimir instance.
 
-### Enrollment Metrics
+## Metrics
 
-- **`simplemdm_enrollment_count`**: Total number of enrollments.
+The following metrics are exposed by the SimpleMDM Prometheus Exporter:
 
-- **`simplemdm_enrollment_user_enrollment`**: User enrollment status.
-  - Labels:
-    - `enrollment_id`: ID of the enrollment.
-  - Values:
-    - `1`: User enrollment enabled.
-    - `0`: User enrollment disabled.
+| Metric Name                          | Description                                      | Labels                                                      | Label Values                                                   |
+|--------------------------------------|--------------------------------------------------|-------------------------------------------------------------|----------------------------------------------------------------|
+| `simplemdm_dep_device_count`         | Number of DEP devices per server                 | `dep_server_id`, `dep_server_name`                           | DEP Server ID, DEP Server Name                                 |
+| `simplemdm_device_group_device_count`| Number of devices in each device group           | `device_group_id`, `device_group_name`                       | Device Group ID, Device Group Name                             |
+| `simplemdm_device_battery`           | Battery level of each device                     | `device_id`, `name`, `simplemdm_name`                        | Device ID, Device Name, SimpleMDM Name                         |
+| `simplemdm_latitude`                 | Latitude of each device                          | `device_id`, `name`, `simplemdm_name`                        | Device ID, Device Name, SimpleMDM Name                         |
+| `simplemdm_longitude`                | Longitude of each device                         | `device_id`, `name`, `simplemdm_name`                        | Device ID, Device Name, SimpleMDM Name                         |
+| `simplemdm_device_info`              | Detailed information about each device           | `device_id`, `name`, `simplemdm_name`, `status`, and more... | Various attributes and relationships of the device             |
 
-- **`simplemdm_enrollment_welcome_screen`**: Welcome screen status.
-  - Labels:
-    - `enrollment_id`: ID of the enrollment.
-  - Values:
-    - `1`: Welcome screen enabled.
-    - `0`: Welcome screen disabled.
+## Contributing
 
-- **`simplemdm_enrollment_authentication`**: Authentication status.
-  - Labels:
-    - `enrollment_id`: ID of the enrollment.
-  - Values:
-    - `1`: Authentication enabled.
-    - `0`: Authentication disabled.
-
-### DEP Server Metrics
-
-- **`simplemdm_dep_server_count`**: Total number of DEP servers.
-
-- **`simplemdm_dep_server_token_expiry`**: Token expiry time for DEP server.
-  - Labels:
-    - `server_id`: ID of the DEP server.
-    - `server_name`: Name of the DEP server.
-
-- **`simplemdm_dep_server_last_synced`**: Last synced time for DEP server.
-  - Labels:
-    - `server_id`: ID of the DEP server.
-    - `server_name`: Name of the DEP server.
-
-### Profile Metrics
-
-- **`simplemdm_profile_count`**: Total number of profiles managed by SimpleMDM.
-
-- **`simplemdm_profile_device_count`**: Total number of devices associated with each profile.
-  - Labels:
-    - `profile_id`: ID of the profile.
-    - `profile_name`: Name of the profile.
-    - `profile_type`: Type of the profile.
-    - `profile_identifier`: Identifier of the profile.
-    - `user_scope`: User scope status.
-    - `group_count`: Number of groups associated with the profile.
-    - `reinstall_after_os_update`: Reinstall after OS update status.
-
-### Installed App Metrics
-
-- **`simplemdm_installed_app_count`**: Total number of installed apps for each device.
-  - Labels:
-    - `device_id`: ID of the device.
-    - `device_name`: Name of the device.
-    - `app_id`: ID of the installed app.
-    - `app_name`: Name of the installed app.
-
-### Push Certificate Metrics
-
-- **`simplemdm_push_certificate_expiry`**: Expiry date of the push certificate.
-  - Labels:
-    - `apple_id`: Apple ID associated with the push certificate.
-    - `expires_at`: Expiry date and time of the push certificate.
+Feel free to open issues or submit pull requests to improve the exporter.
 
 ## License
 
-This project is licensed under the GPL 3.0 License. See the `LICENSE` file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
