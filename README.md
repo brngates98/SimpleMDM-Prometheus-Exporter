@@ -1,7 +1,7 @@
 
 # SimpleMDM Prometheus Exporter
 
-This is a Prometheus exporter for [SimpleMDM](https://simplemdm.com/), allowing you to collect and expose metrics from SimpleMDM for monitoring purposes.
+This is a Prometheus exporter for [SimpleMDM](https://simplemdm.com/), allowing you to collect and expose metrics from SimpleMDM for monitoring purposes...
 
 ## Features
 
