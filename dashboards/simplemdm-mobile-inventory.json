@@ -1,0 +1,593 @@
+{
+  "__inputs": [
+    {
+      "name": "DS_MIMIR",
+      "label": "Mimir",
+      "description": "",
+      "type": "datasource",
+      "pluginId": "prometheus",
+      "pluginName": "Prometheus"
+    }
+  ],
+  "__elements": {},
+  "__requires": [
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "11.1.4"
+    },
+    {
+      "type": "datasource",
+      "id": "prometheus",
+      "name": "Prometheus",
+      "version": "1.0.0"
+    },
+    {
+      "type": "panel",
+      "id": "stat",
+      "name": "Stat",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "table",
+      "name": "Table",
+      "version": ""
+    }
+  ],
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "This dashboard shows an inventory overview of our mobile devices and who they are assigned too",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {
+        "type": "datasource",
+        "uid": "-- Mixed --"
+      },
+      "description": "Shows if metrics are being received for the selected time range.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "text",
+            "mode": "fixed"
+          },
+          "mappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "color": "light-red",
+                  "index": 0,
+                  "text": "No metrics received - Check configuration"
+                }
+              },
+              "type": "special"
+            },
+            {
+              "options": {
+                "from": 0,
+                "result": {
+                  "color": "light-red",
+                  "index": 1,
+                  "text": "Failed to collect metrics"
+                },
+                "to": 0
+              },
+              "type": "range"
+            },
+            {
+              "options": {
+                "from": 1,
+                "result": {
+                  "color": "light-green",
+                  "index": 2,
+                  "text": "Receiving metrics"
+                },
+                "to": 1000000
+              },
+              "type": "range"
+            }
+          ],
+          "noValue": "No data",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "string"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 2,
+        "w": 8,
+        "x": 0,
+        "y": 0
+      },
+      "id": 7,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.1.4",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "editorMode": "code",
+          "expr": "vector(1) and on() ((count(up{job=~\"simplemdm-exporterapi\"} == 1) > 0) and (absent(absent(simplemdm_device_info{job=~\"simplemdm-exporterapi\"})))) or vector(0) and on() ((count(up{job=~\"simplemdm-exporterapi\"}) > 0) and (absent(simplemdm_device_info{job=~\"simplemdm-exporterapi\"})))\n",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Metrics",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "datasource",
+        "uid": "-- Mixed --"
+      },
+      "description": "Shows the timestamp of the latest metrics received for this integration in the last 24 hours.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "text",
+            "mode": "fixed"
+          },
+          "mappings": [],
+          "noValue": "No data",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "dateTimeFromNow"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 2,
+        "w": 8,
+        "x": 8,
+        "y": 0
+      },
+      "id": 8,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "Time",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.1.4",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "editorMode": "code",
+          "expr": "vector(1) and on() ((count(up{job=~\"simplemdm-exporterapi\"} == 1) > 0) and (absent(absent(simplemdm_device_info{job=~\"simplemdm-exporterapi\"})))) or vector(0) and on() ((count(up{job=~\"simplemdm-exporterapi\"}) > 0) and (absent(simplemdm_device_info{job=~\"simplemdm-exporterapi\"})))\n",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "timeFrom": "now-24h",
+      "title": "Latest metrics received",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "datasource",
+        "uid": "-- Mixed --"
+      },
+      "description": "Shows the installed version of this integration.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "text",
+            "mode": "fixed"
+          },
+          "mappings": [],
+          "noValue": "0.0.1",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "string"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 2,
+        "w": 8,
+        "x": 16,
+        "y": 0
+      },
+      "id": 9,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.1.4",
+      "title": "Integration version",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "description": "SimpleMDM Device Overview at a glance",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": true,
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Last Seen"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeAsUSNoDateIfToday"
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "percentage",
+                  "steps": [
+                    {
+                      "color": "transparent",
+                      "value": null
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 22,
+        "w": 24,
+        "x": 0,
+        "y": 2
+      },
+      "id": 1,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "enablePagination": false,
+          "fields": [
+            "Value #Cores",
+            "Value #Load 1",
+            "Value #Memory total",
+            "Value #Disk C: total"
+          ],
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": false,
+            "displayName": "simplemdm_name"
+          }
+        ]
+      },
+      "pluginVersion": "11.1.4",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_MIMIR}"
+          },
+          "disableTextWrap": false,
+          "editorMode": "builder",
+          "expr": "simplemdm_device_info{job=~\"simplemdm-exporterapi\", job=~\"$job\", name=~\"$instance\"}",
+          "format": "table",
+          "fullMetaSearch": false,
+          "hide": false,
+          "includeNullMetadata": true,
+          "instant": true,
+          "legendFormat": "",
+          "refId": "A",
+          "useBackend": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "disableTextWrap": false,
+          "editorMode": "builder",
+          "expr": "simplemdm_custom_attributes{job=~\"simplemdm-exporterapi\", job=~\"$job\", name=~\"$instance\"}",
+          "format": "table",
+          "fullMetaSearch": false,
+          "hide": false,
+          "includeNullMetadata": true,
+          "instant": true,
+          "legendFormat": "",
+          "refId": "B",
+          "useBackend": false
+        }
+      ],
+      "title": "Fleet overview",
+      "transformations": [
+        {
+          "id": "joinByField",
+          "options": {
+            "byField": "name",
+            "mode": "outer"
+          }
+        },
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "pattern": "name|imei|last_seen_at|phone_number|status|serial_number|custom_attr_.+|os_version"
+            }
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Value #A": true,
+              "Value #Enrollment": true,
+              "Value #OS Info": true,
+              "custom_attr_5": true,
+              "custom_attr_6": true,
+              "custom_attr_7": true,
+              "custom_attr_8": true,
+              "custom_attr_9": true
+            },
+            "includeByName": {},
+            "indexByName": {
+              "custom_attr_0": 4,
+              "custom_attr_1": 5,
+              "custom_attr_2": 6,
+              "custom_attr_3": 8,
+              "custom_attr_4": 7,
+              "custom_attr_5": 9,
+              "custom_attr_6": 10,
+              "custom_attr_7": 11,
+              "custom_attr_8": 12,
+              "custom_attr_9": 13,
+              "imei": 16,
+              "last_seen_at": 15,
+              "name": 2,
+              "os_version": 3,
+              "phone_number": 0,
+              "serial_number": 1,
+              "status": 14
+            },
+            "renameByName": {
+              "custom_attr_0": "Employee First Name",
+              "custom_attr_1": "Employee Last Name",
+              "custom_attr_2": "Employee Email",
+              "custom_attr_3": "Device Group",
+              "custom_attr_4": "Employee Phone Number",
+              "hostname": "Hostname",
+              "imei": "IMEI",
+              "instance": "Instance",
+              "job 1": "Job",
+              "last_seen_at": "Last Seen",
+              "name": "Device Name",
+              "os_version": "OS Version",
+              "phone_number": "Device Phone Number",
+              "product": "Product",
+              "serial_number": "Serial Number"
+            }
+          }
+        },
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "Value #(.*)",
+            "renamePattern": "$1"
+          }
+        }
+      ],
+      "type": "table"
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "current": {},
+        "hide": 0,
+        "includeAll": false,
+        "label": "Data source",
+        "multi": false,
+        "name": "datasource",
+        "options": [],
+        "query": "prometheus",
+        "refresh": 1,
+        "regex": "(?!grafanacloud-usage|grafanacloud-ml-metrics).+",
+        "skipUrlSync": false,
+        "type": "datasource"
+      },
+      {
+        "allValue": ".+",
+        "current": {},
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${DS_MIMIR}"
+        },
+        "definition": "label_values(simplemdm_device_last_seen{job=~\"simplemdm-exporterapi\"},job)",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Job",
+        "multi": true,
+        "name": "job",
+        "options": [],
+        "query": {
+          "qryType": 1,
+          "query": "label_values(simplemdm_device_last_seen{job=~\"simplemdm-exporterapi\"},job)",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
+        },
+        "refresh": 2,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "allValue": "",
+        "current": {},
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${datasource}"
+        },
+        "definition": "label_values(simplemdm_custom_attributes{job=~\"simplemdm-exporterapi\"},name)",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Instance",
+        "multi": true,
+        "name": "instance",
+        "options": [],
+        "query": {
+          "qryType": 1,
+          "query": "label_values(simplemdm_custom_attributes{job=~\"simplemdm-exporterapi\"},name)",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
+        },
+        "refresh": 2,
+        "regex": "^(?!.*Mac).*",
+        "skipUrlSync": false,
+        "sort": 1,
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-5m",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "default",
+  "title": "Simplemdm Mobile Inventory",
+  "uid": "cdvhvatknlk3kf",
+  "version": 26,
+  "weekStart": ""
+}
